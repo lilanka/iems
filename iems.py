@@ -5,8 +5,11 @@ from process_data import prepare_data
 from utils import read_json
 
 def main():
+  # don't need to load testing and testing data on memory
+  is_training = True
+
   # get dataset
-  train_data, test_data = prepare_data()
+  train_data = prepare_data(is_training)
   print(train_data)
 
   # configs of the system
