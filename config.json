@@ -4,5 +4,16 @@
     "charging_efficiency": 0.7,
     "discharging_efficiency": 0.8,
     "dt": 1
+  }, 
+
+  "energy_network": {
+    "residential_fuell_cell_1_p": 0,
+    "residential_fuell_cell_1_q": 0,
+    "residential_fuell_cell_2_p": 0,
+    "residential_fuell_cell_2_q": 0,
+    "chp_diesel_p": 0,
+    "chp_diesel_q": 0,
+    "fuell_cell_p": 0,
+    "fuell_cell_q": 0
   }
 }

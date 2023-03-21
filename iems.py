@@ -10,13 +10,13 @@ def main():
 
   # get dataset
   train_data = prepare_data(is_training)
-  print(train_data)
 
   # configs of the system
   config_path = "config.json"
   config = read_json(config_path)
 
   controller = Controller(config)
+  controller.run_system(train_data)
 
 if __name__ == "__main__":
   main()
