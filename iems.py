@@ -1,6 +1,8 @@
-# Main function of Energy Management System
-def iems():
-  return 0
+from process_data import prepare_data
+
+def main():
+  data = prepare_data()
+
 
 if __name__ == "__main__":
-  iems()
+  main()
