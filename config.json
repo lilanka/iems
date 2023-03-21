@@ -1,0 +1,8 @@
+{
+  "battery": {
+    "soc": 40,
+    "charging_efficiency": 0.7,
+    "discharging_efficiency": 0.8,
+    "dt": 1
+  }
+}
