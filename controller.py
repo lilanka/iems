@@ -1,5 +1,5 @@
-from battery import Battery
-from energy_network import EnergyNetwork
+from system.battery import Battery
+from system.energy_network import EnergyNetwork
 
 class Controller:
   """
