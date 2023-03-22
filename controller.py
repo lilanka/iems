@@ -12,7 +12,7 @@ class Controller:
 
   def run_system(self, data):
     self.energy_network.run_energy_network(5, 10)
-    node_voltages = self.energy_network.get_node_voltages()
+    #node_voltages = self.energy_network.get_node_voltages()
+    #print(node_voltages)
     line_currents = self.energy_network.get_line_currents()
-    grid_powers_p, grid_powers_q = self.energy_network.get_grid_powers()
-    print(grid_powers_p, ", ", grid_powers_q)
+    #grid_powers_p, grid_powers_q = self.energy_network.get_grid_powers()
