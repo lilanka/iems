@@ -11,7 +11,7 @@ class Controller:
     self.energy_network = EnergyNetwork(config["energy_network"])
 
   def run_system(self, data):
-    self.energy_network.run_energy_network(5, 10)
+    self.energy_network.run_energy_network(0.5, 0.5, 0.4)
     #node_voltages = self.energy_network.get_node_voltages()
     #print(node_voltages)
     line_currents = self.energy_network.get_line_currents()
