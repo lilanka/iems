@@ -34,6 +34,9 @@ class EnergyNetwork:
     self._insert_solar_wind_demand(solar_power, wind_power, demand, p, q)
     pp.runpp(self.network)
 
+  def get_dg_p(self):
+    return self.network.sgen["p_mw"][9:]
+
   def get_node_voltages(self):
     #  from res_bus
     return self.network.res_bus["vm_pu"][1:12]
@@ -61,8 +64,6 @@ class EnergyNetwork:
     if p is not None and q is not None:
       self.network.sgen["p_mw"][9:] = p
       self.network.sgen["q_mvar"][9:] = q
-
-    print(self.network.sgen)
 
   def _init_pfs(self):
     # calculate fixed power factors of load
