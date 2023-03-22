@@ -24,9 +24,14 @@ class EnergyNetwork:
     self.network.load["sn_mva"][8:10] = [0, 0]
     self.network.load["sn_mva"][15:18] = [0, 0, 0]
 
-  def run_energy_network(self, solar_power, wind_power, demand):
-    self._insert_solar_wind_demand(solar_power, wind_power, demand)
-    # run the system and get active/reactive powers
+    # initialize energy storage system
+    self.network.storage["sn_mva"][0] = 0.6
+    self.network.storage["soc_percent"][0] = config["battery1"]["soc"]
+    self.network.storage["soc_percent"][1] = config["battery1"]["soc"]
+
+  def run_energy_network(self, solar_power, wind_power, demand, p=None, q=None):
+    # p, q (1x4) array
+    self._insert_solar_wind_demand(solar_power, wind_power, demand, p, q)
     pp.runpp(self.network)
 
   def get_node_voltages(self):
@@ -43,7 +48,7 @@ class EnergyNetwork:
     # from res_ext_grid
     return self.network.res_ext_grid["p_mw"][0], self.network.res_ext_grid["q_mvar"][0]
 
-  def _insert_solar_wind_demand(self, solar_power, wind_power, demand):
+  def _insert_solar_wind_demand(self, solar_power, wind_power, demand, p, q):
     # update solar 
     self.network.sgen["p_mw"][:8] =  solar_power * self.network.sgen["sn_mva"][:8]
     self.network.sgen["p_mw"][8] =  wind_power * self.network.sgen["sn_mva"][8]
@@ -51,6 +56,13 @@ class EnergyNetwork:
     # update demand
     self.network.load["p_mw"] = demand * self.network.load["sn_mva"] * self.pf
     self.network.load["q_mvar"] = demand * self.network.load["sn_mva"] * np.sin(np.arccos(self.pf))
+
+    # update p, q
+    if p is not None and q is not None:
+      self.network.sgen["p_mw"][9:] = p
+      self.network.sgen["q_mvar"][9:] = q
+
+    print(self.network.sgen)
 
   def _init_pfs(self):
     # calculate fixed power factors of load
