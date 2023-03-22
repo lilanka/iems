@@ -1,9 +1,18 @@
 {
-  "battery": {
-    "soc": 0.4,
-    "charging_efficiency": 0.7,
+  "battery1": {
+    "capacity": 1,
+    "soc": 40,
+    "charging_efficiency": 70,
     "discharging_efficiency": 0.8,
-    "dt": 1
+    "dt": 0.25 
+  }, 
+
+  "battery2": {
+    "capacity": 3,
+    "soc": 40,
+    "charging_efficiency": 70,
+    "discharging_efficiency": 0.8,
+    "dt": 0.25 
   }, 
 
   "energy_network": {
@@ -15,5 +24,29 @@
     "chp_diesel_q": 0,
     "fuell_cell_p": 0,
     "fuell_cell_q": 0
+  },
+
+  "cost_coeff": {
+    "sell_beta": 0.8,
+    "res_fuel_cell_1": {
+      "a": 0.000025,
+      "b": 0.012900,
+      "c": 0.125275
+    },
+    "res_fuel_cell_2": {
+      "a": 0.000025,
+      "b": 0.018100,
+      "c": 0.115375
+    },
+    "chp_diesel": {
+      "a": 0.000025,
+      "b": 0.008950,
+      "c": 0.328900
+    },
+    "fuel_cell": {
+      "a": 0.000025,
+      "b": 0.010175,
+      "c": 0.288075
+    }
   }
 }
