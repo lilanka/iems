@@ -18,8 +18,8 @@ class Controller:
     self.agent = Agent()
 
   def run_system(self, data):
-    self.energy_network.run_energy_network(0.5, 0.5, 0.4)
-    self._get_reward(0.7)
+    self.energy_network.run_energy_network(5, 5, 0.4)
+    self._get_auxiliary_cost()
 
   def _get_reward(self, rate):
     cfg = self.config["cost_coeff"]
@@ -38,3 +38,22 @@ class Controller:
     # note: at validation stage, r has to be modified with a penalty
     r = -(cost_dg + cost_grid) 
     return r
+  
+  def _get_auxiliary_cost(self):
+    # equivalent penalty for CPO 
+    node_voltages = self.energy_network.get_node_voltages()
+    line_currents = self.energy_network.get_line_currents()
+    grid_p, grid_q = self.energy_network.get_grid_powers()
+    battery_soc = self.energy_network.get_soc()
+    p, q, s = self.energy_network.get_dg_p(), self.energy_network.get_dg_q(), self.energy_network.get_dg_s() 
+
+    aux_cost_voltage = np.sum(np.maximum(np.maximum(0, node_voltages - 1.05), 0.95 - node_voltages))
+    aux_cost_current = np.sum(np.maximum(0, (line_currents / 0.145) - 1))
+
+    s_grid = np.sqrt(grid_p**2 + grid_q**2)
+    aux_cost_ext_grid = np.maximum(0, (s_grid / 25) - 1)
+    aux_cost_battery = np.sum(np.maximum(np.maximum(0, battery_soc - 80), 20 - battery_soc))
+    aux_cost_dg = np.sum(np.maximum(0, (np.sqrt(p**2 + q**2) / s) - 1))
+
+    aux_cost = aux_cost_voltage + aux_cost_current + aux_cost_ext_grid + aux_cost_battery + aux_cost_dg
+    return aux_cost

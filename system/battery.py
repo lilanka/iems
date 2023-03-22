@@ -12,6 +12,7 @@ class Battery:
   def get_soc_value(self, p):
     # p: battery chargning discharging power (MW)
     u = self._charging_state(p)
+    # todo: check whether the equation is correct
     self.energy += (abs(p) * self.dt * ((self.nc * self.nd + 1) * u - 1)) / self.nd 
     return (self.energy / self.cap) * 100
 

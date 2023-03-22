@@ -37,6 +37,12 @@ class EnergyNetwork:
   def get_dg_p(self):
     return self.network.sgen["p_mw"][9:]
 
+  def get_dg_q(self):
+    return self.network.sgen["q_mvar"][9:]
+
+  def get_dg_s(self):
+    return self.network.sgen["sn_mva"][9:]
+
   def get_node_voltages(self):
     #  from res_bus
     return self.network.res_bus["vm_pu"][1:12]
@@ -45,11 +51,14 @@ class EnergyNetwork:
     # from res_line
     net = self.network.res_line["i_ka"]
     net = net.drop([net.index[10], net.index[11], net.index[14]]).reset_index().iloc[:,1:]
-    return net 
+    return net["i_ka"] 
 
   def get_grid_powers(self):
     # from res_ext_grid
     return self.network.res_ext_grid["p_mw"][0], self.network.res_ext_grid["q_mvar"][0]
+
+  def get_soc(self):
+    return self.network.storage["soc_percent"]
 
   def _insert_solar_wind_demand(self, solar_power, wind_power, demand, p, q):
     # update solar 
