@@ -48,5 +48,46 @@
       "b": 0.010175,
       "c": 0.288075
     }
+  },
+
+  "action_space": {
+    "res_fuel_cell_1": {
+      "p_min": 0,
+      "p_max": 0.033,
+      "q_min": 0,
+      "q_max": 0.010,
+      "step_size": 0.001
+    },
+    "res_fuel_cell_2": {
+      "p_min": 0,
+      "p_max": 0.014,
+      "q_min": 0,
+      "q_max": 0.004,
+      "step_size": 0.001
+    },
+    "fuel_cell": {
+      "p_min": 0,
+      "p_max": 0.212,
+      "q_min": 0,
+      "q_max": 0.040,
+      "step_size": 0.001
+    },
+    "chp_diesel": {
+      "p_min": 0,
+      "p_max": 0.310,
+      "q_min": 0,
+      "q_max": 0.050,
+      "step_size": 0.001
+    },
+    "battery_1": {
+      "p_min": -0.6,
+      "p_max": 0.6,
+      "step_size": 0.025
+    },
+    "battery_2": {
+      "p_min": -0.2,
+      "p_max": 0.2,
+      "step_size": 0.025
+    }
   }
 }
