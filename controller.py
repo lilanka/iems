@@ -1,8 +1,9 @@
 import numpy as np
+import torch
 
 from system.battery import Battery
 from system.energy_network import EnergyNetwork
-from models.agent import Agent
+from models.model import Model 
 
 class Controller:
   """
@@ -11,11 +12,13 @@ class Controller:
   def __init__(self, config):
     self.config = config
 
+    self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
     # initialize components in the system 
     self.battery1 = Battery(config["battery1"]) 
     self.battery2 = Battery(config["battery2"]) 
     self.energy_network = EnergyNetwork(config)
-    self.agent = Agent()
+    self.agent = Model(5, 10).to(self.device)
 
   def run_system(self, data):
     self.energy_network.run_energy_network(5, 5, 0.4)
