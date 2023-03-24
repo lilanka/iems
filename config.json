@@ -1,6 +1,6 @@
 {
   "battery1": {
-    "capacity": 1,
+    "capacity": 3,
     "soc": 40,
     "charging_efficiency": 70,
     "discharging_efficiency": 0.8,
@@ -8,7 +8,7 @@
   }, 
 
   "battery2": {
-    "capacity": 3,
+    "capacity": 1,
     "soc": 40,
     "charging_efficiency": 70,
     "discharging_efficiency": 0.8,
