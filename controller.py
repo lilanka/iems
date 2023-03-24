@@ -20,7 +20,6 @@ class Controller:
   def run_system(self, data):
     self.energy_network.run_energy_network(5, 5, 0.4)
     self._get_auxiliary_cost()
-    print("passed")
 
   def _get_reward(self, rate):
     cfg = self.config["cost_coeff"]
