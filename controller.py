@@ -4,6 +4,7 @@ import torch
 from system.battery import Battery
 from system.energy_network import EnergyNetwork
 from models.model import Model 
+from memory import SequentialMemory
 
 class Controller:
   """
@@ -14,11 +15,24 @@ class Controller:
 
     self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # initialize components in the system 
+    # initialize the system 
+    # microgrid
     self.battery1 = Battery(config["battery1"]) 
     self.battery2 = Battery(config["battery2"]) 
     self.energy_network = EnergyNetwork(config)
+
+    # agent network
     self.agent = Model(5, 10).to(self.device)
+
+    # replay buffer
+    self.memory = SequentialMemory(limit=config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
+
+  def reset_system(self, data):
+    # returns: Bus P/Q, price, SOC from battery
+    pass
+
+  def random_action(self):
+    pass
 
   def run_system(self, data):
     self.energy_network.run_energy_network(5, 5, 0.4)

@@ -1,4 +1,8 @@
 {
+  "train_iter": 200000,
+  "day": 96,
+  "warmup": 100,
+
   "battery1": {
     "capacity": 3,
     "soc": 40,
@@ -24,6 +28,11 @@
     "chp_diesel_q": 0,
     "fuell_cell_p": 0,
     "fuell_cell_q": 0
+  },
+
+  "Memory": {
+    "mem_size": 6000000,
+    "window_length": 1
   },
 
   "cost_coeff": {
