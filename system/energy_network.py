@@ -32,9 +32,9 @@ class EnergyNetwork:
     self.network.storage["soc_percent"][0] = config["battery1"]["soc"]
     self.network.storage["soc_percent"][1] = config["battery1"]["soc"]
 
-  def run_energy_network(self, solar_power, wind_power, demand, p=None, q=None):
+  def run_energy_network(self, swd, p=None, q=None):
     # p, q (1x4) array
-    self._insert_solar_wind_demand(solar_power, wind_power, demand, p, q)
+    self._insert_solar_wind_demand(swd, p, q)
     pp.runpp(self.network)
 
   def get_dg_p(self):
@@ -63,14 +63,14 @@ class EnergyNetwork:
   def get_soc(self):
     return self.network.storage["soc_percent"]
 
-  def _insert_solar_wind_demand(self, solar_power, wind_power, demand, p, q):
+  def _insert_solar_wind_demand(self, swd, p, q):
     # update solar 
-    self.network.sgen["p_mw"][:8] =  solar_power * self.network.sgen["sn_mva"][:8]
-    self.network.sgen["p_mw"][8] =  wind_power * self.network.sgen["sn_mva"][8]
+    self.network.sgen["p_mw"][:8] =  swd[0] * self.network.sgen["sn_mva"][:8]
+    self.network.sgen["p_mw"][8] =  swd[1] * self.network.sgen["sn_mva"][8]
 
     # update demand
-    self.network.load["p_mw"] = demand * self.network.load["sn_mva"] * self.pf
-    self.network.load["q_mvar"] = demand * self.network.load["sn_mva"] * np.sin(np.arccos(self.pf))
+    self.network.load["p_mw"] = swd[2] * self.network.load["sn_mva"] * self.pf
+    self.network.load["q_mvar"] = swd[2] * self.network.load["sn_mva"] * np.sin(np.arccos(self.pf))
 
     # update p, q
     if p is not None and q is not None:

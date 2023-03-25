@@ -28,15 +28,14 @@ class Controller:
     self.memory = SequentialMemory(limit=config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
 
   def reset_system(self, data):
-    # returns: Bus P/Q, price, SOC from battery
-    pass
+    self.energy_network.run_energy_network(data)
+    return np.array([self.energy_network.get_dg_p(), self.energy_network.get_dg_q()])
 
   def random_action(self):
     pass
 
   def run_system(self, data):
-    self.energy_network.run_energy_network(5, 5, 0.4)
-    self._get_auxiliary_cost()
+    self.energy_network.run_energy_network(data)
 
   def _get_reward(self, rate):
     cfg = self.config["cost_coeff"]
