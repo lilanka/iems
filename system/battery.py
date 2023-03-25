@@ -9,7 +9,7 @@ class Battery:
     self.nd = config["discharging_efficiency"] 
     self.dt = config["dt"]
 
-  def get_soc_value(self, p):
+  def get_next_soc(self, p):
     # p: battery chargning discharging power (MW)
     u = self._charging_state(p)
     # todo: check whether the equation is correct
