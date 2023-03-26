@@ -7,18 +7,12 @@ class EnergyNetwork:
   Microgrid model
   """
   def __init__(self, config):
+    self.config = config
     self.network = pn.create_cigre_network_mv(with_der="all")
 
     self.pf = None 
     self._init_pfs()
 
-    # initialize the energy network parameters
-    """
-    self.network.sgen["p_mw"][9], self.network.sgen["q_mvar"][9] = config["residential_fuell_cell_1_p"], config["residential_fuell_cell_1_q"] 
-    self.network.sgen["p_mw"][12], self.network.sgen["q_mvar"][12] = config["residential_fuell_cell_2_p"], config["residential_fuell_cell_2_q"] 
-    self.network.sgen["p_mw"][10], self.network.sgen["q_mvar"][10] = config["chp_diesel_p"], config["chp_diesel_q"] 
-    self.network.sgen["p_mw"][11], self.network.sgen["q_mvar"][11] = config["fuell_cell_p"], config["fuell_cell_q"] 
-    """
     # set solar capacities
     self.network.sgen["sn_mva"][:6] = 0.020
     
@@ -32,10 +26,23 @@ class EnergyNetwork:
     self.network.storage["soc_percent"][0] = config["battery1"]["soc"]
     self.network.storage["soc_percent"][1] = config["battery1"]["soc"]
 
-  def run_energy_network(self, swd, p=None, q=None):
-    # p, q (1x4) array
-    self._insert_solar_wind_demand(swd, p, q)
+  def update_soc(self, soc):
+    self.network.storage["soc_percent"] = soc
+
+  def run_energy_network(self, swd, pq=None, soc=None):
+    # pq (1xn_actions): 
+    #   0-4: p solar  
+    #   4-6: p battery
+    #   6-n_actions: q solar
+    self._insert_solar_wind_demand_pq_soc(swd, pq, soc)
     pp.runpp(self.network)
+
+  def reset(self):
+    # reset energy network
+    self.network.sgen["p_mw"][9:] = self.network.sgen["sn_mva"][9:]
+    self.network.sgen["q_mvar"][9:] = 0
+    self.network.storage["p_mw"] = self.network.storage["sn_mva"]
+    self.network.storage["soc_percent"] = [self.config["battery1"]["soc"], self.config["battery2"]["soc"]]
 
   def get_dg_p(self):
     return self.network.sgen["p_mw"][9:]
@@ -63,7 +70,10 @@ class EnergyNetwork:
   def get_soc(self):
     return self.network.storage["soc_percent"]
 
-  def _insert_solar_wind_demand(self, swd, p, q):
+  def get_pq(self):
+    return np.concatenate((self.network.res_bus["p_mw"][:12], self.network.res_bus["q_mvar"][:12]))
+
+  def _insert_solar_wind_demand_pq_soc(self, swd, pq, soc):
     # update solar 
     self.network.sgen["p_mw"][:8] =  swd[0] * self.network.sgen["sn_mva"][:8]
     self.network.sgen["p_mw"][8] =  swd[1] * self.network.sgen["sn_mva"][8]
@@ -72,10 +82,14 @@ class EnergyNetwork:
     self.network.load["p_mw"] = swd[2] * self.network.load["sn_mva"] * self.pf
     self.network.load["q_mvar"] = swd[2] * self.network.load["sn_mva"] * np.sin(np.arccos(self.pf))
 
+    if soc is not None:
+      self.network.storage["soc_percent"] = soc
+
     # update p, q
-    if p is not None and q is not None:
-      self.network.sgen["p_mw"][9:] = p
-      self.network.sgen["q_mvar"][9:] = q
+    if pq is not None:
+      self.network.sgen["p_mw"][9:] = pq[:4]
+      self.network.storage["p_mw"] = pq[4:6]
+      self.network.sgen["q_mvar"][9:] = pq[6:]
 
   def _init_pfs(self):
     # calculate fixed power factors of load
