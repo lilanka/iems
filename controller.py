@@ -5,6 +5,7 @@ from system.battery import Battery
 from system.energy_network import EnergyNetwork
 from models.model import Model 
 from memory import SequentialMemory
+from utils import *
 
 def define_action_space(cfg):
   # define action space
@@ -41,7 +42,8 @@ class Controller:
   """
   def __init__(self, config):
     self.config = config
-    self.device = "cuda" if torch.cuda.is_available() else "cpu"
+    #self.device = "cuda" if torch.cuda.is_available() else "cpu"
+    # todo: find a way to put things on gpu
     self.device = "cpu"
 
     # initialize action observation space 
@@ -63,6 +65,11 @@ class Controller:
 
     # replay buffer
     self.memory = SequentialMemory(limit=config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
+
+  def select_action(self, obs):
+    # todo: find a way to select actions from action space
+    action = to_numpy(self.agent(to_tensor(obs))) # wrong
+    return action
 
   def get_observations(self, swd, price, action=None, is_reset=False):
     if is_reset:

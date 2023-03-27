@@ -1,6 +1,5 @@
 #!/bin/python3
 
-import torch
 import numpy as np
 
 from utils import read_json
@@ -22,7 +21,7 @@ def train(warmup, num_iterations, day, controller, training_data):
       # take random actions just to fill the memory buffer for certain period
       action = controller.random_action()
     else:
-      action = controller.agent(torch.from_numpy(observations.astype(np.float32))).cpu().detach().numpy()
+      action = controller.select_action(observations)
 
     # next observations
     observations2 = controller.get_observations(training_data["swd"][episode], training_data["p"][episode], action)
