@@ -5,6 +5,36 @@ from system.battery import Battery
 from system.energy_network import EnergyNetwork
 from models.model import Model 
 from memory import SequentialMemory
+from utils import *
+
+def define_action_space(cfg):
+  # define action space
+  p_rfc1 = np.arange(cfg["action_space"]["res_fuel_cell_1"]['p_min'], cfg["action_space"]["res_fuel_cell_1"]['p_max'] + cfg["action_space"]["res_fuel_cell_1"]['step_size'], cfg["action_space"]["res_fuel_cell_1"]['step_size'])
+  p_chp = np.arange(cfg["action_space"]["chp_diesel"]['p_min'], cfg["action_space"]["chp_diesel"]['p_max'] + cfg["action_space"]["chp_diesel"]['step_size'], cfg["action_space"]["chp_diesel"]['step_size'])
+  p_fc = np.arange(cfg["action_space"]["fuel_cell"]['p_min'], cfg["action_space"]["fuel_cell"]['p_max'] + cfg["action_space"]["fuel_cell"]['step_size'], cfg["action_space"]["fuel_cell"]['step_size'])
+  p_rfc2 = np.arange(cfg["action_space"]["res_fuel_cell_2"]['p_min'], cfg["action_space"]["res_fuel_cell_2"]['p_max'] + cfg["action_space"]["res_fuel_cell_2"]['step_size'], cfg["action_space"]["res_fuel_cell_2"]['step_size'])
+  p_bat1 = np.arange(cfg["action_space"]["battery_1"]["p_min"], cfg["action_space"]["battery_1"]["p_max"] + cfg["action_space"]["battery_1"]['step_size'], cfg["action_space"]["battery_1"]['step_size'])
+  p_bat2 = np.arange(cfg["action_space"]["battery_2"]["p_min"], cfg["action_space"]["battery_2"]["p_max"] + cfg["action_space"]["battery_2"]['step_size'], cfg["action_space"]["battery_2"]['step_size'])
+  q_rfc1 = np.arange(cfg["action_space"]["res_fuel_cell_1"]['q_min'], cfg["action_space"]["res_fuel_cell_1"]['q_max'] + cfg["action_space"]["res_fuel_cell_1"]['step_size'], cfg["action_space"]["res_fuel_cell_1"]['step_size'])
+  q_chp = np.arange(cfg["action_space"]["chp_diesel"]['q_min'], cfg["action_space"]["chp_diesel"]['q_max'] + cfg["action_space"]["chp_diesel"]['step_size'], cfg["action_space"]["chp_diesel"]['step_size'])
+  q_fc = np.arange(cfg["action_space"]["fuel_cell"]['q_min'], cfg["action_space"]["fuel_cell"]['q_max'] + cfg["action_space"]["fuel_cell"]['step_size'], cfg["action_space"]["fuel_cell"]['step_size'])
+  q_rfc2 = np.arange(cfg["action_space"]["res_fuel_cell_2"]['q_min'], cfg["action_space"]["res_fuel_cell_2"]['q_max'] + cfg["action_space"]["res_fuel_cell_2"]['step_size'], cfg["action_space"]["res_fuel_cell_2"]['step_size'])
+
+  for i in range(len(p_bat1)):
+    if abs(p_bat1[i]) < 1e-10:
+      p_bat1[i] = 0
+
+  for i in range(len(p_bat2)):
+    if abs(p_bat2[i]) < 1e-10:
+      p_bat2[i] = 0
+
+  return [q_rfc2, p_chp, p_fc, p_rfc2, p_bat1, p_bat2, q_rfc1, q_chp, q_fc, q_rfc2]
+
+def define_cost_coefficients(cfg):
+  a_d = np.array([cfg["res_fuel_cell_1"]["a"], cfg["chp_diesel"]["a"], cfg["fuel_cell"]["a"], cfg["res_fuel_cell_2"]["a"]])       
+  b_d = np.array([cfg["res_fuel_cell_1"]["b"], cfg["chp_diesel"]["b"], cfg["fuel_cell"]["b"], cfg["res_fuel_cell_2"]["b"]])       
+  c_d = np.array([cfg["res_fuel_cell_1"]["c"], cfg["chp_diesel"]["c"], cfg["fuel_cell"]["c"], cfg["res_fuel_cell_2"]["c"]])
+  return a_d, b_d, c_d
 
 class Controller:
   """
@@ -12,8 +42,17 @@ class Controller:
   """
   def __init__(self, config):
     self.config = config
+    #self.device = "cuda" if torch.cuda.is_available() else "cpu"
+    # todo: find a way to put things on gpu
+    self.device = "cpu"
 
-    self.device = "cuda" if torch.cuda.is_available() else "cpu"
+    # initialize action observation space 
+    self.n_actions = config["action_space"]["n_actions"]
+    self.n_obs = config["obs_space"]["n_obs"]
+    self.action_space = define_action_space(config)
+
+    # initialize cost coefficients
+    self.a_d, self.b_d, self.c_d = define_cost_coefficients(config["cost_coeff"])
 
     # initialize the system 
     # microgrid
@@ -22,34 +61,52 @@ class Controller:
     self.energy_network = EnergyNetwork(config)
 
     # agent network
-    self.agent = Model(5, 10).to(self.device)
+    self.agent = Model(self.n_obs, self.n_actions).to(self.device)
 
     # replay buffer
     self.memory = SequentialMemory(limit=config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
 
-  def reset_system(self, data):
-    self.energy_network.run_energy_network(data)
-    return np.array([self.energy_network.get_dg_p(), self.energy_network.get_dg_q()])
+  def select_action(self, obs):
+    # todo: find a way to select actions from action space
+    action = to_numpy(self.agent(to_tensor(obs))) # wrong
+    return action
+
+  def get_observations(self, swd, price, action=None, is_reset=False):
+    if is_reset:
+      self._reset_system() 
+      soc = self.energy_network.get_soc()
+      battery1_soc, battery2_soc = self.battery1.get_next_soc(soc[0], is_percentage=True), self.battery2.get_next_soc(soc[1], is_percentage=True)
+    else:
+      battery1_soc, battery2_soc = self.battery1.get_next_soc(action[4]), self.battery2.get_next_soc(action[5])
+
+    self.energy_network.run_energy_network(swd, action, [battery1_soc, battery2_soc])
+    # update soc for next power flow
+    self.energy_network.update_soc([battery1_soc, battery2_soc])
+    pq = self.energy_network.get_pq()
+    return np.concatenate((pq, [battery1_soc, battery2_soc, price]))
+
+  def _reset_system(self):
+    self.energy_network.reset()
+    self.battery1.reset()
+    self.battery2.reset()
 
   def random_action(self):
-    pass
-
+    action = []
+    for i in range(self.n_actions):
+      action.append(np.random.choice(self.action_space[i]))
+    return action
+  
   def run_system(self, data):
     self.energy_network.run_energy_network(data)
 
-  def _get_reward(self, rate):
-    cfg = self.config["cost_coeff"]
+  def get_reward(self, price):
     p = self.energy_network.get_dg_p()
     grid_p, _ = self.energy_network.get_grid_powers()
 
-    a_d = np.array([cfg["res_fuel_cell_1"]["a"], cfg["chp_diesel"]["a"], cfg["fuel_cell"]["a"], cfg["res_fuel_cell_2"]["a"]])       
-    b_d = np.array([cfg["res_fuel_cell_1"]["b"], cfg["chp_diesel"]["b"], cfg["fuel_cell"]["b"], cfg["res_fuel_cell_2"]["b"]])       
-    c_d = np.array([cfg["res_fuel_cell_1"]["c"], cfg["chp_diesel"]["c"], cfg["fuel_cell"]["c"], cfg["res_fuel_cell_2"]["c"]])
+    cost_dg = np.sum(self.a_d * p**2 + self.b_d * p + self.c_d)
 
-    cost_dg = np.sum(a_d * p**2 + b_d * p + c_d)
-
-    energy_cost = rate * grid_p / 4 
-    cost_grid = energy_cost if grid_p >= 0 else energy_cost * cfg["sell_beta"] 
+    energy_cost = price * grid_p / 4 
+    cost_grid = energy_cost if grid_p >= 0 else energy_cost * self.config["cost_coeff"]["sell_beta"] 
 
     # note: at validation stage, r has to be modified with a penalty
     r = -(cost_dg + cost_grid) 

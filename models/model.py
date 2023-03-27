@@ -9,12 +9,15 @@ class Model(nn.Module):
     self.fc3 = nn.Linear(256, 256)
     self.fc4 = nn.Linear(256, out_dims)
 
+    self.relu = nn.ReLU()
+    self.tanh = nn.Tanh()
+
   def _init_weights(self):
     pass
 
   def forward(self, x):
     x = self.fc1(x)
-    x = nn.ReLU(self.fc2(x))
-    x = nn.ReLU(self.fc3(x))
-    x = nn.Tanh(self.fc4(x))
+    x = self.relu(self.fc2(x))
+    x = self.relu(self.fc3(x))
+    x = self.tanh(self.fc4(x))
     return x

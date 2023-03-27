@@ -6,7 +6,7 @@
   "battery1": {
     "capacity": 3,
     "soc": 40,
-    "charging_efficiency": 70,
+    "charging_efficiency": 0.7,
     "discharging_efficiency": 0.8,
     "dt": 0.25 
   }, 
@@ -14,21 +14,10 @@
   "battery2": {
     "capacity": 1,
     "soc": 40,
-    "charging_efficiency": 70,
+    "charging_efficiency": 0.7,
     "discharging_efficiency": 0.8,
     "dt": 0.25 
   }, 
-
-  "energy_network": {
-    "residential_fuell_cell_1_p": 0,
-    "residential_fuell_cell_1_q": 0,
-    "residential_fuell_cell_2_p": 0,
-    "residential_fuell_cell_2_q": 0,
-    "chp_diesel_p": 0,
-    "chp_diesel_q": 0,
-    "fuell_cell_p": 0,
-    "fuell_cell_q": 0
-  },
 
   "Memory": {
     "mem_size": 6000000,
@@ -59,7 +48,12 @@
     }
   },
 
+  "obs_space": {
+    "n_obs": 27
+  },
+
   "action_space": {
+    "n_actions": 10,
     "res_fuel_cell_1": {
       "p_min": 0,
       "p_max": 0.033,
