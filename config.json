@@ -2,6 +2,8 @@
   "train_iter": 200000,
   "day": 96,
   "warmup": 100,
+  "batch_size": 64,
+  "max_episode_length": 500,
 
   "battery1": {
     "capacity": 3,

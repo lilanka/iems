@@ -40,7 +40,8 @@ class Controller:
   """
   Controller logic
   """
-  def __init__(self, config):
+  def __init__(self, config, is_training=True):
+    self.is_training = is_training
     self.config = config
     #self.device = "cuda" if torch.cuda.is_available() else "cpu"
     # todo: find a way to put things on gpu
@@ -65,11 +66,22 @@ class Controller:
 
     # replay buffer
     self.memory = SequentialMemory(limit=config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
+    self.s1 = self.a1 = None # most recent state and action
 
   def select_action(self, obs):
     # todo: find a way to select actions from action space
     action = to_numpy(self.agent(to_tensor(obs))) # wrong
+    self.a1 = action
     return action
+
+  def observe(self, r, obs2, done):
+    if self.is_training:
+      self.memory.append(self.s1, self.a1, r, done) 
+      self.s1 = obs2
+
+  def update_policy(self):
+    s1_b, a1_b, r_b, s2_b, t_b = self.memory.sample_and_split(self.config["batch_size"])
+    print(s1_b)
 
   def get_observations(self, swd, price, action=None, is_reset=False):
     if is_reset:
@@ -85,15 +97,11 @@ class Controller:
     pq = self.energy_network.get_pq()
     return np.concatenate((pq, [battery1_soc, battery2_soc, price]))
 
-  def _reset_system(self):
-    self.energy_network.reset()
-    self.battery1.reset()
-    self.battery2.reset()
-
   def random_action(self):
     action = []
     for i in range(self.n_actions):
       action.append(np.random.choice(self.action_space[i]))
+    self.a1 = action
     return action
   
   def run_system(self, data):
@@ -111,6 +119,11 @@ class Controller:
     # note: at validation stage, r has to be modified with a penalty
     r = -(cost_dg + cost_grid) 
     return r
+
+  def _reset_system(self):
+    self.energy_network.reset()
+    self.battery1.reset()
+    self.battery2.reset()
   
   def _get_auxiliary_cost(self):
     # equivalent penalty for CPO 
