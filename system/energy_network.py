@@ -20,7 +20,7 @@ class EnergyNetwork:
     self.network.switch["closed"][7] = False
     self.network.load["sn_mva"][8:10] = [0, 0]
     self.network.load["sn_mva"][15:18] = [0, 0, 0]
-
+    
     # initialize energy storage system
     self.network.storage["sn_mva"][0] = 0.6
     self.network.storage["soc_percent"][0] = config["battery1"]["soc"]
@@ -74,6 +74,7 @@ class EnergyNetwork:
     return np.concatenate((self.network.res_bus["p_mw"][:12], self.network.res_bus["q_mvar"][:12]))
 
   def _insert_solar_wind_demand_pq_soc(self, swd, pq, soc):
+    
     # update solar 
     self.network.sgen["p_mw"][:8] =  swd[0] * self.network.sgen["sn_mva"][:8]
     self.network.sgen["p_mw"][8] =  swd[1] * self.network.sgen["sn_mva"][8]

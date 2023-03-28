@@ -1,9 +1,10 @@
 import numpy as np
-import torch
+import torch.distributions as distributions
 
 from system.battery import Battery
 from system.energy_network import EnergyNetwork
-from models.model import Model 
+from models.actor import Actor 
+from models.critic import Critic
 from memory import SequentialMemory
 from utils import *
 
@@ -62,11 +63,21 @@ class Controller:
     self.energy_network = EnergyNetwork(config)
 
     # agent network
-    self.agent = Model(self.n_obs, self.n_actions).to(self.device)
+    self.agent = Actor(self.n_obs, self.n_actions).to(self.device)
+    # critic network 
+    self.critic = Critic(self.n_obs, self.n_actions).to(self.device)
+    self.critic_c = Critic(self.n_obs, self.n_actions).to(self.device)
 
     # replay buffer
     self.memory = SequentialMemory(limit=config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
     self.s1 = self.a1 = None # most recent state and action
+
+  def update_policy(self):
+    s1_b, a1_b, r_b, s2_b, t_b = self.memory.sample_and_split(self.config["batch_size"])
+
+    # Q values 
+    q_b = self.critic([to_tensor(s1_b, volatile=True), to_tensor(a1_b, volatile=True)])
+    qc_b = self.critic_c([to_tensor(s1_b, volatile=True), to_tensor(a1_b, volatile=True)])
 
   def select_action(self, obs):
     # todo: find a way to select actions from action space
@@ -79,10 +90,6 @@ class Controller:
       self.memory.append(self.s1, self.a1, r, done) 
       self.s1 = obs2
 
-  def update_policy(self):
-    s1_b, a1_b, r_b, s2_b, t_b = self.memory.sample_and_split(self.config["batch_size"])
-    print(s1_b)
-
   def get_observations(self, swd, price, action=None, is_reset=False):
     if is_reset:
       self._reset_system() 
@@ -90,12 +97,14 @@ class Controller:
       battery1_soc, battery2_soc = self.battery1.get_next_soc(soc[0], is_percentage=True), self.battery2.get_next_soc(soc[1], is_percentage=True)
     else:
       battery1_soc, battery2_soc = self.battery1.get_next_soc(action[4]), self.battery2.get_next_soc(action[5])
-
+    
     self.energy_network.run_energy_network(swd, action, [battery1_soc, battery2_soc])
     # update soc for next power flow
     self.energy_network.update_soc([battery1_soc, battery2_soc])
     pq = self.energy_network.get_pq()
-    return np.concatenate((pq, [battery1_soc, battery2_soc, price]))
+    observations = np.concatenate((pq, [battery1_soc, battery2_soc, price]), axis=0)
+    self.s1 = observations
+    return observations
 
   def random_action(self):
     action = []

@@ -16,7 +16,7 @@ def train(warmup, num_iterations, day, controller, training_data):
     # todo: resetting if it's start of the episode
     if s1 is None or tau % day == 0:
       s1 = controller.get_observations(training_data["swd"][episode], training_data["p"][episode], is_reset=True)
-
+    
     # pick actions
     if step <= warmup:
       # take random actions just to fill the memory buffer for certain period
@@ -32,7 +32,7 @@ def train(warmup, num_iterations, day, controller, training_data):
     #print(f"Iter {step}, S: {s1}, a: {action}, St: {s2}, r: {r}")
 
     # agent update policy
-    controller.observe([r], s2, done)
+    controller.observe(r, s2, done)
     if step > warmup:
       controller.update_policy()
       break
