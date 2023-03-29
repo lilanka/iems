@@ -9,7 +9,7 @@ import numpy as np
 
 # This is to be understood as a transition: Given `state0`, performing `action`
 # yields `reward` and results in `state1`, which might be `terminal`.
-Experience = namedtuple('Experience', 'state0, action, reward, state1, terminal1')
+Experience = namedtuple('Experience', 'state0, action, reward, state1, terminal1, cost')
 
 def sample_batch_indexes(low, high, size):
   if high - low >= size:
@@ -80,7 +80,7 @@ class Memory(object):
   def sample(self, batch_size, batch_idxs=None):
     raise NotImplementedError()
 
-  def append(self, observation, action, reward, terminal, training=True):
+  def append(self, observation, action, reward, terminal, cost, training=True):
     self.recent_observations.append(observation)
     self.recent_terminals.append(terminal)
 
@@ -121,6 +121,7 @@ class SequentialMemory(Memory):
     self.rewards = RingBuffer(limit)
     self.terminals = RingBuffer(limit)
     self.observations = RingBuffer(limit)
+    self.costs = RingBuffer(limit)
 
   def sample(self, batch_size, batch_idxs=None):
     if batch_idxs is None:
@@ -161,6 +162,7 @@ class SequentialMemory(Memory):
       action = self.actions[idx - 1]
       reward = self.rewards[idx - 1]
       terminal1 = self.terminals[idx - 1]
+      cost = self.costs[idx - 1]
 
       # Okay, now we need to create the follow-up state. This is state0 shifted on timestep
       # to the right. Again, we need to be careful to not include an observation from the next
@@ -170,7 +172,7 @@ class SequentialMemory(Memory):
 
       assert len(state0) == self.window_length
       assert len(state1) == len(state0)
-      experiences.append(Experience(state0=state0, action=action, reward=reward, state1=state1, terminal1=terminal1))
+      experiences.append(Experience(state0=state0, action=action, reward=reward, state1=state1, terminal1=terminal1, cost=cost))
     assert len(experiences) == batch_size
     return experiences
 
@@ -182,11 +184,13 @@ class SequentialMemory(Memory):
     action_batch = []
     terminal1_batch = []
     state1_batch = []
+    cost_batch = []
     for e in experiences:
       state0_batch.append(e.state0)
       state1_batch.append(e.state1)
       reward_batch.append(e.reward)
       action_batch.append(e.action)
+      cost_batch.append(e.cost)
       terminal1_batch.append(0. if e.terminal1 else 1.)
 
     # Prepare and validate parameters.
@@ -195,11 +199,12 @@ class SequentialMemory(Memory):
     terminal1_batch = np.array(terminal1_batch).reshape(batch_size,-1)
     reward_batch = np.array(reward_batch).reshape(batch_size,-1)
     action_batch = np.array(action_batch).reshape(batch_size,-1)
+    cost_batch = np.array(cost_batch).reshape(batch_size,-1)
 
-    return state0_batch, action_batch, reward_batch, state1_batch, terminal1_batch
+    return state0_batch, action_batch, reward_batch, state1_batch, terminal1_batch, cost_batch
 
-  def append(self, observation, action, reward, terminal, training=True):
-    super(SequentialMemory, self).append(observation, action, reward, terminal, training=training)
+  def append(self, observation, action, reward, terminal, cost, training=True):
+    super(SequentialMemory, self).append(observation, action, reward, terminal, cost, training=training)
     
     # This needs to be understood as follows: in `observation`, take `action`, obtain `reward`
     # and weather the next state is `terminal` or not.
@@ -208,6 +213,7 @@ class SequentialMemory(Memory):
       self.actions.append(action)
       self.rewards.append(reward)
       self.terminals.append(terminal)
+      self.costs.append(cost)
 
   @property
   def nb_entries(self):

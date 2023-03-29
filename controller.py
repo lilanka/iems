@@ -76,23 +76,28 @@ class Controller:
     self.s1 = self.a1 = None # most recent state and action
 
   def update_policy(self):
-    s1_b, a1_b, r_b, s2_b, t_b = self.memory.sample_and_split(self.config["batch_size"])
+    s1_b, a1_b, r_b, s2_b, t_b, c_b = self.memory.sample_and_split(self.config["batch_size"])
 
     # Q values 
     with torch.no_grad():
-      q_b = self.critic([to_tensor(s1_b, volatile=True), to_tensor(a1_b, volatile=True)])
-      qc_b = self.critic_c([to_tensor(s1_b, volatile=True), to_tensor(a1_b, volatile=True)])
+      q_b = to_numpy(self.critic([to_tensor(s1_b), to_tensor(a1_b)]))
+      qc_b = to_numpy(self.critic_c([to_tensor(s1_b), to_tensor(a1_b)]))
 
     # get advantage estimate from the trajectories
-    advantages, returns = self._estimate_advantages(r_b, t_b, to_numpy(q_b))
-    advantages_c, returns_c = self._estimate_advantages(r_b, t_b, to_numpy(qc_b))
+    advantages, returns = self._estimate_advantages(r_b, t_b, q_b)
+    advantages_c, returns_c = self._estimate_advantages(r_b, t_b, qc_b)
 
-    costs = self._get_auxiliary_cost()
-    print(costs)
-    #cost_advantages, _ = self._estimate_advantages(costs)
+    cost_advantages, _ = self._estimate_advantages(c_b, t_b, q_b)
+    cost_c_advantages, _ = self._estimate_advantages(c_b, t_b, qc_b)
 
-    #print(advantages, returns)
-    #print(advantages_c, returns_c)
+    constraint_value = self._estimate_constraint_value(c_b, t_b)
+    constraint_value = constraint_value[0]
+
+    # perform update
+    v_loss, p_loss, cost_loss = self._cpo_step()
+
+  def _cpo_step(self):
+    return 0, 0, 0
 
   def _estimate_advantages(self, r, mask, q):
     deltas = advantages = np.empty_like(r) 
@@ -110,6 +115,22 @@ class Controller:
     advantages = (advantages - advantages.mean()) / advantages.std()
     return advantages, returns 
   
+  def _estimate_constraint_value(self, cost, mask):
+    constraint_value = np.array([0])
+
+    j = traj_num = 1
+    for i in range(self.config["batch_size"]):
+      constraint_value = constraint_value + cost[i] * self.gamma**(j-1)
+
+      if mask[i] == 0:
+        j = 1 # reset
+        traj_num += 1
+      else:
+        j += 1
+    
+    constraint_value /= traj_num
+    return constraint_value
+  
   def select_action(self, obs):
     probs = self.agent(to_tensor(obs))
     m = distributions.Categorical(probs, validate_args=False)
@@ -121,7 +142,8 @@ class Controller:
 
   def observe(self, r, obs2, done):
     if self.is_training:
-      self.memory.append(self.s1, self.a1, r, done) 
+      cost = self._get_auxiliary_cost()
+      self.memory.append(self.s1, self.a1, r, done, cost) 
       self.s1 = obs2
 
   def get_observations(self, swd, price, action=None, is_reset=False):

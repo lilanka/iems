@@ -29,13 +29,12 @@ def train(warmup, num_iterations, day, controller, training_data):
     # reward
     r = controller.get_reward(training_data["p"][episode]) 
 
-    #print(f"Iter {step}, S: {s1}, a: {action}, St: {s2}, r: {r}")
+    print(f"Iter {step}, S: {s1}, a: {action}, St: {s2}, r: {r}")
 
     # agent update policy
     controller.observe(r, s2, done)
     if step > warmup:
       controller.update_policy()
-      break
 
     step += 1
     episode += 1
