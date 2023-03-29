@@ -48,6 +48,9 @@ class Controller:
     # todo: find a way to put things on gpu
     self.device = "cpu"
 
+    self.gamma = config["gamma"]
+    self.tau = config["tau"]
+
     # initialize action observation space 
     self.n_actions = config["action_space"]["n_actions"]
     self.n_obs = config["obs_space"]["n_obs"]
@@ -69,21 +72,52 @@ class Controller:
     self.critic_c = Critic(self.n_obs, self.n_actions).to(self.device)
 
     # replay buffer
-    self.memory = SequentialMemory(limit=config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
+    self.memory = SequentialMemory(limit=self.config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
     self.s1 = self.a1 = None # most recent state and action
 
   def update_policy(self):
     s1_b, a1_b, r_b, s2_b, t_b = self.memory.sample_and_split(self.config["batch_size"])
 
     # Q values 
-    q_b = self.critic([to_tensor(s1_b, volatile=True), to_tensor(a1_b, volatile=True)])
-    qc_b = self.critic_c([to_tensor(s1_b, volatile=True), to_tensor(a1_b, volatile=True)])
+    with torch.no_grad():
+      q_b = self.critic([to_tensor(s1_b, volatile=True), to_tensor(a1_b, volatile=True)])
+      qc_b = self.critic_c([to_tensor(s1_b, volatile=True), to_tensor(a1_b, volatile=True)])
 
+    # get advantage estimate from the trajectories
+    advantages, returns = self._estimate_advantages(r_b, t_b, to_numpy(q_b))
+    advantages_c, returns_c = self._estimate_advantages(r_b, t_b, to_numpy(qc_b))
+
+    costs = self._get_auxiliary_cost()
+    print(costs)
+    #cost_advantages, _ = self._estimate_advantages(costs)
+
+    #print(advantages, returns)
+    #print(advantages_c, returns_c)
+
+  def _estimate_advantages(self, r, mask, q):
+    deltas = advantages = np.empty_like(r) 
+
+    prev_value = 0
+    prev_advantage = 0
+    for i in reversed(range(self.config["batch_size"])):
+      deltas[i] = r[i] * self.gamma * self.tau * prev_value * mask[i] - q[i]
+      advantages[i] = deltas[i] + self.gamma * self.tau * prev_advantage * mask[i]
+
+      prev_value = q[i][0]
+      prev_advantage = advantages[i][0]
+
+    returns = q + advantages
+    advantages = (advantages - advantages.mean()) / advantages.std()
+    return advantages, returns 
+  
   def select_action(self, obs):
+    probs = self.agent(to_tensor(obs))
+    m = distributions.Categorical(probs, validate_args=False)
     # todo: find a way to select actions from action space
-    action = to_numpy(self.agent(to_tensor(obs))) # wrong
-    self.a1 = action
-    return action
+    action = probs
+    self.agent.log_probs.append(m.log_prob(action))
+    self.a1 = to_numpy(action)
+    return to_numpy(action)
 
   def observe(self, r, obs2, done):
     if self.is_training:

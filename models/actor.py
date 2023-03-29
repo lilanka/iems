@@ -13,6 +13,8 @@ class Actor(nn.Module):
     self.tanh = nn.Tanh()
     self._init_weights()
 
+    self.log_probs = []
+
   def _init_weights(self):
     self.fc1.weight.data = fanin_init(self.fc1.weight.data.size())
     self.fc2.weight.data = fanin_init(self.fc2.weight.data.size())

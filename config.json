@@ -2,7 +2,9 @@
   "train_iter": 200000,
   "day": 96,
   "warmup": 100,
-  "batch_size": 64,
+  "batch_size": 96,
+  "gamma": 0.999,
+  "tau": 0.1,
 
   "battery1": {
     "capacity": 3,

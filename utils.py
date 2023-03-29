@@ -24,3 +24,6 @@ def to_numpy(tensor):
 
 def to_tensor(ndarray, volatile=False, requires_grad=False, dtype=f):
   return Variable(torch.from_numpy(ndarray.astype(np.float32)), volatile=volatile, requires_grad=requires_grad).type(dtype)
+
+def to_device(device, *args):
+  return [x.to(device) for x in args] 
