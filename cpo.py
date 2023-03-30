@@ -62,12 +62,14 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
         value_loss.backward()
         return value_loss.item(), get_flat_grad_from(value_net.parameters()).cpu().numpy()
 
-    print(get_flat_params_from(value_net))
-
     #pdb.set_trace()
-    flat_params, _, opt_info = scipy.optimize.fmin_l_bfgs_b(get_value_loss,
-                                                            get_flat_params_from(value_net).detach().cpu().numpy(),
-                                                            maxiter=25)
+    # important ----------------------------------------
+    # todo: try to optimize the get_value_loss funciton
+    # look at https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html#scipy.optimize.fmin_l_bfgs_b
+    # ----------------------------------------
+    #flat_params, _, opt_info = scipy.optimize.fmin_l_bfgs_b(get_value_loss, get_flat_params_from(value_net).detach().cpu().numpy(), maxiter=25)
+    flat_params = get_flat_params_from(value_net).detach().cpu().numpy()
+
     v_loss,_ = get_value_loss(get_flat_params_from(value_net).detach().cpu().numpy())
     set_flat_params_to(value_net, to_tensor(flat_params))
 

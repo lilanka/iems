@@ -56,7 +56,6 @@ def main():
 
   if is_training:
     train(config["warmup"], config["train_iter"], config["day"], controller, training_data)
-  #controller.run_system(train_data)
 
 if __name__ == "__main__":
   main()

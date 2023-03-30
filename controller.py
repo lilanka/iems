@@ -102,8 +102,7 @@ class Controller:
   def _estimate_advantages(self, r, mask, q):
     deltas = advantages = np.empty_like(r) 
 
-    prev_value = 0
-    prev_advantage = 0
+    prev_value = prev_advantage = 0
     for i in reversed(range(self.config["batch_size"])):
       deltas[i] = r[i] * self.gamma * self.tau * prev_value * mask[i] - q[i]
       advantages[i] = deltas[i] + self.gamma * self.tau * prev_advantage * mask[i]
