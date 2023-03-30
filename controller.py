@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.optimize
 import torch.distributions as distributions
 
 from system.battery import Battery
@@ -7,6 +8,7 @@ from models.actor import Actor
 from models.critic import Critic
 from memory import SequentialMemory
 from utils import *
+from cpo import cpo_step
 
 def define_action_space(cfg):
   # define action space
@@ -94,10 +96,8 @@ class Controller:
     constraint_value = constraint_value[0]
 
     # perform update
-    v_loss, p_loss, cost_loss = self._cpo_step()
-
-  def _cpo_step(self):
-    return 0, 0, 0
+    v_loss, p_loss, cost_loss = cpo_step("mg", self.agent, self.critic, s1_b, a1_b, r_b, advantages, cost_advantages, constraint_value, self.config["max_constraint"], self.config["max_kl"], self.config["damping"], self.config["l2_reg"])
+    print(v_loss)
 
   def _estimate_advantages(self, r, mask, q):
     deltas = advantages = np.empty_like(r) 
