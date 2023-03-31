@@ -47,6 +47,7 @@ def line_search(model, f, x, fullstep, expected_improve_full, max_backtracks=10,
 def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantages, cost_advantages, constraint_value, d_k, max_kl, damping, l2_reg, use_fim=True):
     states = to_tensor(states)
     actions = to_tensor(actions)
+    returns = to_tensor(returns)
     advantages = to_tensor(advantages)
     cost_advantages = to_tensor(cost_advantages)
     constraint_value = to_tensor(np.array(constraint_value))
@@ -60,7 +61,7 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
             if param.grad is not None:
                 param.grad.data.fill_(0)
         values_pred = value_net([states, actions])
-        value_loss = (values_pred - to_tensor(returns)).pow(2).mean()
+        value_loss = (values_pred - returns).pow(2).mean()
 
         # weight decay
         for param in value_net.parameters():
@@ -69,12 +70,18 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
         return value_loss.item(), get_flat_grad_from(value_net.parameters()).cpu().numpy()
 
     #pdb.set_trace()
+
     # important ----------------------------------------
     # todo: try to optimize the get_value_loss funciton
     # look at https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html#scipy.optimize.fmin_l_bfgs_b
     # ----------------------------------------
-    flat_params, _, opt_info = scipy.optimize.fmin_l_bfgs_b(get_value_loss, get_flat_params_from(value_net).detach().cpu().numpy(), maxiter=25)
     flat_params = get_flat_params_from(value_net).detach().cpu().numpy()
+    """
+    vlaue_loss = [get_value_loss(flat_params)[1]]
+    print("flat_params: ", flat_params)
+    print(f"vlue_loss: ", vlaue_loss)
+    """
+    #flat_params, _, opt_info = scipy.optimize.fmin_l_bfgs_b(get_value_loss, get_flat_params_from(value_net).detach().cpu().numpy(), maxiter=25)
 
     v_loss,_ = get_value_loss(get_flat_params_from(value_net).detach().cpu().numpy())
     set_flat_params_to(value_net, to_tensor(flat_params))

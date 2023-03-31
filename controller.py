@@ -1,10 +1,8 @@
 import numpy as np
-import scipy.optimize
-import torch.distributions as distributions
 
 from system.battery import Battery
 from system.energy_network import EnergyNetwork
-from models.actor import Actor 
+from models.actor import Actor
 from models.critic import Critic
 from memory import SequentialMemory
 from utils import *
@@ -33,6 +31,12 @@ def define_action_space(cfg):
 
   return [q_rfc2, p_chp, p_fc, p_rfc2, p_bat1, p_bat2, q_rfc1, q_chp, q_fc, q_rfc2]
 
+def get_n_action_space(action_space):
+  dim = []
+  for a in action_space:
+    dim.append(a.shape[0])
+  return dim
+
 def define_cost_coefficients(cfg):
   a_d = np.array([cfg["res_fuel_cell_1"]["a"], cfg["chp_diesel"]["a"], cfg["fuel_cell"]["a"], cfg["res_fuel_cell_2"]["a"]])       
   b_d = np.array([cfg["res_fuel_cell_1"]["b"], cfg["chp_diesel"]["b"], cfg["fuel_cell"]["b"], cfg["res_fuel_cell_2"]["b"]])       
@@ -54,9 +58,9 @@ class Controller:
     self.tau = config["tau"]
 
     # initialize action observation space 
-    self.n_actions = config["action_space"]["n_actions"]
     self.n_obs = config["obs_space"]["n_obs"]
     self.action_space = define_action_space(config)
+    self.n_action_space = get_n_action_space(self.action_space)
 
     # initialize cost coefficients
     self.a_d, self.b_d, self.c_d = define_cost_coefficients(config["cost_coeff"])
@@ -68,10 +72,10 @@ class Controller:
     self.energy_network = EnergyNetwork(config)
 
     # agent network
-    self.agent = Actor(self.n_obs, self.n_actions).to(self.device)
+    self.agent = Actor(self.n_obs, self.n_action_space).to(self.device)
     # critic network 
-    self.critic = Critic(self.n_obs, self.n_actions).to(self.device)
-    self.critic_c = Critic(self.n_obs, self.n_actions).to(self.device)
+    self.critic = Critic(self.n_obs, len(self.n_action_space)).to(self.device)
+    self.critic_c = Critic(self.n_obs, len(self.n_action_space)).to(self.device)
 
     # replay buffer
     self.memory = SequentialMemory(limit=self.config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
@@ -132,14 +136,15 @@ class Controller:
   
   def select_action(self, obs):
     probs = self.agent(to_tensor(obs))
-    #m = distributions.Categorical(probs, validate_args=False)
-    # todo: find a way to select actions from action space
-    #action = probs
-    #self.agent.log_probs.append(m.log_prob(action))
-    self.a1 = to_numpy(probs)
-    print("obs: ", obs)
-    print("action:", self.a1)
-    return to_numpy(probs)
+    actions = []
+    start = 0
+    for i, space in enumerate(self.action_space):
+      dim = self.n_action_space[i] 
+      a = space[np.argmax(to_numpy(probs[start: start + dim]))]
+      actions.append(a)
+      start = dim
+    self.a1 = actions 
+    return actions 
 
   def observe(self, r, obs2, done):
     if self.is_training:
@@ -165,7 +170,7 @@ class Controller:
 
   def random_action(self):
     action = []
-    for i in range(self.n_actions):
+    for i in range(len(self.n_action_space)):
       action.append(np.random.choice(self.action_space[i]))
     self.a1 = action
     return action

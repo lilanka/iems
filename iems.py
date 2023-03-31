@@ -12,6 +12,13 @@ def train(warmup, num_iterations, day, controller, training_data):
   step = episode = 0
   s1 = None
   tau = training_data["p"].shape[0]
+
+  v_loss = p_loss = cost_loss = 0
+
+  v_loss_list = []
+  p_loss_list = []
+  cost_loss_list = []
+
   while step < num_iterations:
     # todo: resetting if it's start of the episode
     if s1 is None or tau % day == 0:
@@ -29,13 +36,15 @@ def train(warmup, num_iterations, day, controller, training_data):
     # reward
     r = controller.get_reward(training_data["p"][episode]) 
 
-    #print(f"Iter: {step}, S: {s1}, a: {action}, St: {s2}, r: {r}")
-    print(f"iter: {step}")
-
     # agent update policy
     controller.observe(r, s2, done)
     if step > warmup:
-      controller.update_policy()
+      v_loss, p_loss, cost_loss = controller.update_policy()
+      print(f"Iter: {step}, v_loss: {v_loss}, p_loss: {p_loss}, cost_loss: {cost_loss}, r: {r}")
+
+    v_loss_list.append(v_loss)
+    p_loss_list.append(p_loss)
+    cost_loss_list.append(cost_loss)
 
     step += 1
     episode += 1
