@@ -97,7 +97,7 @@ class Controller:
 
     # perform update
     v_loss, p_loss, cost_loss = cpo_step("mg", self.agent, self.critic, s1_b, a1_b, r_b, advantages, cost_advantages, constraint_value, self.config["max_constraint"], self.config["max_kl"], self.config["damping"], self.config["l2_reg"])
-    print(v_loss)
+    return v_loss, p_loss, cost_loss
 
   def _estimate_advantages(self, r, mask, q):
     deltas = advantages = np.empty_like(r) 
@@ -132,12 +132,14 @@ class Controller:
   
   def select_action(self, obs):
     probs = self.agent(to_tensor(obs))
-    m = distributions.Categorical(probs, validate_args=False)
+    #m = distributions.Categorical(probs, validate_args=False)
     # todo: find a way to select actions from action space
-    action = probs
-    self.agent.log_probs.append(m.log_prob(action))
-    self.a1 = to_numpy(action)
-    return to_numpy(action)
+    #action = probs
+    #self.agent.log_probs.append(m.log_prob(action))
+    self.a1 = to_numpy(probs)
+    print("obs: ", obs)
+    print("action:", self.a1)
+    return to_numpy(probs)
 
   def observe(self, r, obs2, done):
     if self.is_training:

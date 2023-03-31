@@ -45,6 +45,12 @@ def line_search(model, f, x, fullstep, expected_improve_full, max_backtracks=10,
 
 
 def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantages, cost_advantages, constraint_value, d_k, max_kl, damping, l2_reg, use_fim=True):
+    states = to_tensor(states)
+    actions = to_tensor(actions)
+    advantages = to_tensor(advantages)
+    cost_advantages = to_tensor(cost_advantages)
+    constraint_value = to_tensor(np.array(constraint_value))
+    d_k = np.array(d_k) 
 
     """update critic"""
 
@@ -53,7 +59,7 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
         for param in value_net.parameters():
             if param.grad is not None:
                 param.grad.data.fill_(0)
-        values_pred = value_net([to_tensor(states), to_tensor(actions)])
+        values_pred = value_net([states, actions])
         value_loss = (values_pred - to_tensor(returns)).pow(2).mean()
 
         # weight decay
@@ -67,7 +73,7 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
     # todo: try to optimize the get_value_loss funciton
     # look at https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html#scipy.optimize.fmin_l_bfgs_b
     # ----------------------------------------
-    #flat_params, _, opt_info = scipy.optimize.fmin_l_bfgs_b(get_value_loss, get_flat_params_from(value_net).detach().cpu().numpy(), maxiter=25)
+    flat_params, _, opt_info = scipy.optimize.fmin_l_bfgs_b(get_value_loss, get_flat_params_from(value_net).detach().cpu().numpy(), maxiter=25)
     flat_params = get_flat_params_from(value_net).detach().cpu().numpy()
 
     v_loss,_ = get_value_loss(get_flat_params_from(value_net).detach().cpu().numpy())
