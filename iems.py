@@ -6,6 +6,9 @@ from utils import read_json
 from controller import Controller
 from process_data import prepare_data
 
+from torch.utils.tensorboard import SummaryWriter
+
+writer = SummaryWriter()
 
 def train(warmup, num_iterations, day, controller, training_data):
   done = False
@@ -45,6 +48,12 @@ def train(warmup, num_iterations, day, controller, training_data):
     v_loss_list.append(v_loss)
     p_loss_list.append(p_loss)
     cost_loss_list.append(cost_loss)
+
+    # tensorboard update
+    writer.add_scalar("v_loss", v_loss, step)
+    writer.add_scalar("p_loss", p_loss, step)
+    writer.add_scalar("cost_loss", cost_loss, step)
+    writer.add_scalar("reward", r, step)
 
     step += 1
     episode += 1
