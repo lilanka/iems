@@ -200,7 +200,7 @@ class Controller:
     node_voltages = self.energy_network.get_node_voltages()
     line_currents = self.energy_network.get_line_currents()
     grid_p, grid_q = self.energy_network.get_grid_powers()
-    battery_soc = self.energy_network.get_soc()
+    battery_soc = self.energy_network.get_soc() / 100
     p, q, s = self.energy_network.get_dg_p(), self.energy_network.get_dg_q(), self.energy_network.get_dg_s() 
 
     aux_cost_voltage = np.sum(np.maximum(np.maximum(0, node_voltages - 1.05), 0.95 - node_voltages))
@@ -208,7 +208,7 @@ class Controller:
 
     s_grid = np.sqrt(grid_p**2 + grid_q**2)
     aux_cost_ext_grid = np.maximum(0, (s_grid / 25) - 1)
-    aux_cost_battery = np.sum(np.maximum(np.maximum(0, battery_soc - 80), 20 - battery_soc))
+    aux_cost_battery = np.sum(np.maximum(np.maximum(0, battery_soc - 0.8), 0.2 - battery_soc))
     aux_cost_dg = np.sum(np.maximum(0, (np.sqrt(p**2 + q**2) / s) - 1))
 
     aux_cost = aux_cost_voltage + aux_cost_current + aux_cost_ext_grid + aux_cost_battery + aux_cost_dg
