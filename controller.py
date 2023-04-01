@@ -79,7 +79,8 @@ class Controller:
 
     # replay buffer
     self.memory = SequentialMemory(limit=self.config["Memory"]["mem_size"], window_length=config["Memory"]["window_length"])
-    self.s1 = self.a1 = None # most recent state and action
+    self.s1 = None
+    self.a1 = None # most recent state and action
 
   def update_policy(self):
     s1_b, a1_b, r_b, s2_b, t_b, c_b = self.memory.sample_and_split(self.config["batch_size"])

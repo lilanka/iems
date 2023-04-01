@@ -12,11 +12,14 @@ writer = SummaryWriter()
 
 def train(warmup, num_iterations, day, controller, training_data):
   done = False
-  step = episode = 0
+  step = 0
+  episode = 0
   s1 = None
   tau = training_data["p"].shape[0]
 
-  v_loss = p_loss = cost_loss = 0
+  v_loss = 0
+  p_loss = 0
+  cost_loss = 0
 
   v_loss_list = []
   p_loss_list = []

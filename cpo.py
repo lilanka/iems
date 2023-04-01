@@ -76,7 +76,7 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
     #print("flat_params: ", flat_params)
     #print(f"vlue_loss: ", vlaue_loss)
 
-    flat_params, _, opt_info = scipy.optimize.fmin_tnc(get_value_loss, get_flat_params_from(value_net).detach().cpu().numpy(), maxfun=100)
+    flat_params, _, opt_info = scipy.optimize.fmin_tnc(get_value_loss, get_flat_params_from(value_net).detach().cpu().numpy(), maxfun=1000)
 
     v_loss,_ = get_value_loss(get_flat_params_from(value_net).detach().cpu().numpy())
     set_flat_params_to(value_net, to_tensor(flat_params))
@@ -212,15 +212,14 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
     # check for feasibility
     if ((cc**2)/s - max_kl) > 0 and cc>0:
         print('INFEASIBLE !!!!')
-        #opt_stepdir = -torch.sqrt(2*max_kl/s).unsqueeze(-1)*Fvp(cost_stepdir)
-        opt_stepdir = torch.sqrt(2*max_kl/s)*Fvp(cost_stepdir)
+        opt_stepdir = -torch.sqrt(2*max_kl/s).unsqueeze(-1)*Fvp(cost_stepdir)
+        #opt_stepdir = torch.sqrt(2*max_kl/s)*Fvp(cost_stepdir)
     else: 
-        #opt_grad = -(loss_grad + opt_nu*cost_loss_grad)/opt_lambda
-        opt_stepdir = (stepdir - opt_nu*cost_stepdir)/opt_lambda
-        #opt_stepdir = conjugate_gradients(Fvp, -opt_grad, 10)
+        opt_grad = -(loss_grad + opt_nu*cost_loss_grad)/opt_lambda
+        #opt_stepdir = (stepdir - opt_nu*cost_stepdir)/opt_lambda
+        opt_stepdir = conjugate_gradients(Fvp, -opt_grad, 10)
     
     #print(f"{bcolors.OKBLUE} nu by lambda {opt_nu/opt_lambda},\t lambda {1/opt_lambda}{bcolors.ENDC}")
-    """
     #find the maximum step length
     xhx = opt_stepdir.dot(Fvp(opt_stepdir))
     beta_1 = -cc/(cost_loss_grad.dot(opt_stepdir))
@@ -243,5 +242,6 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
     prev_params = get_flat_params_from(policy_net)
     new_params = prev_params + opt_stepdir
     set_flat_params_to(policy_net, new_params)
+    """
     
     return v_loss, loss, cost_loss

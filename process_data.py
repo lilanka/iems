@@ -14,7 +14,10 @@ def prepare_data(is_training=True):
     solar_train_data = read_csv(f"{training_data_path}/Solar_train_full.csv").iloc[:,1:]
     wind_train_data = read_csv(f"{training_data_path}/Wind_train_full.csv").iloc[:,1:]
 
-    demand_temp = solar_temp = wind_temp = price_temp = []
+    demand_temp = []
+    solar_temp = []
+    wind_temp = []
+    price_temp = []
 
     for i in range(731):
       demand_temp.append(demand_train_data.iloc[:,i])
