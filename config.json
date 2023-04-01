@@ -5,7 +5,7 @@
   "batch_size": 96,
   "gamma": 0.999,
   "tau": 0.95,
-  "max_kl": 1e-2,
+  "max_kl": 0.02,
   "max_constraint": 1e-2,
   "damping": 1e-2,
   "l2_reg": 1e-3,

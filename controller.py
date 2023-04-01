@@ -91,10 +91,8 @@ class Controller:
 
     # get advantage estimate from the trajectories
     advantages, returns = self._estimate_advantages(r_b, t_b, q_b)
-    advantages_c, returns_c = self._estimate_advantages(r_b, t_b, qc_b)
 
-    cost_advantages, _ = self._estimate_advantages(c_b, t_b, q_b)
-    cost_c_advantages, _ = self._estimate_advantages(c_b, t_b, qc_b)
+    cost_advantages, _ = self._estimate_advantages(c_b, t_b, qc_b)
 
     constraint_value = self._estimate_constraint_value(c_b, t_b)
     constraint_value = constraint_value[0]
