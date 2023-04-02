@@ -1,5 +1,3 @@
-# from https://github.com/SapanaChaudhary/PyTorch-CPO/blob/master/algos/cpo.py
-
 import numpy as np
 import torch
 import scipy.optimize

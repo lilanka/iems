@@ -1,5 +1,3 @@
-# see https://github.com/ghliu/pytorch-ddpg/blob/master/memory.py
-
 from __future__ import absolute_import
 from collections import deque, namedtuple
 import warnings
