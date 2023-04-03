@@ -46,3 +46,9 @@ class Actor(nn.Module):
     action_prob = self.forward(x)
     M = action_prob.pow(-1).view(-1).detach()
     return M, action_prob, {}
+  
+  def get_kl(self, x):
+    prob1 = self.forward(x)
+    prob0 = prob1.detach()
+    kl = prob0 * (torch.log(prob0) - torch.log(prob1))
+    return kl.sum(1, keepdim=True)
