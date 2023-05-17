@@ -35,7 +35,7 @@ class EnergyNetwork:
     #   4-6: p battery
     #   6-n_actions: q solar
     self._insert_solar_wind_demand_pq_soc(swd, pq, soc)
-    pp.runpp(self.network)
+    pp.runpp(self.network, max_iteration=1000)
 
   def reset(self):
     # reset energy network
