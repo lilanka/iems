@@ -178,7 +178,7 @@ class Controller:
     self.energy_network.run_energy_network(data)
 
   def get_reward(self, price):
-    p = self.energy_network.get_dg_p()
+    p = self.energy_network.get_dg_p()*1000 # Convert from MW to kW (Pandapower default is MW)
     grid_p, _ = self.energy_network.get_grid_powers()
 
     cost_dg = np.sum(self.a_d * p**2 + self.b_d * p + self.c_d)
