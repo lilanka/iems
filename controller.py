@@ -134,15 +134,8 @@ class Controller:
     return constraint_value
   
   def select_action(self, obs):
-    probs = self.agent(to_tensor(obs))
-    actions = []
-    start = 0
-    for i, space in enumerate(self.action_space):
-      dim = self.n_action_space[i] 
-      a = space[np.argmax(to_numpy(probs[start: start + dim]))]
-      actions.append(a)
-      start = dim
-    self.a1 = actions 
+    actions = self.agent.select_action(to_tensor(obs))
+    print(f'select: {actions}')
     return actions 
 
   def observe(self, r, obs2, done):
@@ -157,6 +150,7 @@ class Controller:
       soc = self.energy_network.get_soc()
       battery1_soc, battery2_soc = self.battery1.get_next_soc(soc[0], is_percentage=True), self.battery2.get_next_soc(soc[1], is_percentage=True)
     else:
+      print(len(action))
       battery1_soc, battery2_soc = self.battery1.get_next_soc(action[4]), self.battery2.get_next_soc(action[5])
     
     self.energy_network.run_energy_network(swd, action, [battery1_soc, battery2_soc])
