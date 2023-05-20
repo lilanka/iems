@@ -134,8 +134,7 @@ class Controller:
     return constraint_value
   
   def select_action(self, obs):
-    actions = self.agent.select_action(to_tensor(obs))
-    print(f'select: {actions}')
+    actions = to_numpy(self.agent.select_action(to_tensor(obs)))
     return actions 
 
   def observe(self, r, obs2, done):

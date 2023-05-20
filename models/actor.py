@@ -11,11 +11,8 @@ class Actor(nn.Module):
     self.fc1 = nn.Linear(in_dims, 256)
     self.fc2 = nn.Linear(256, 256)
     self.fc3 = nn.Linear(256, 256)
-    self.fc4_a = nn.Linear(256, 4)
-    self.fc4_b = nn.Linear(256, 2)
-    self.fc4_c = nn.Linear(256, 4)
+    self.action_mean = nn.Linear(256, 10)
 
-    self.action_mean = nn.Linear(10, 10)
     self.action_mean.weight.data.mul_(0.1)
     self.action_mean.bias.data.mul_(0.0)
 
@@ -28,14 +25,12 @@ class Actor(nn.Module):
     x = self.fc1(x)
     x = self.relu(self.fc2(x))
     x = self.relu(self.fc3(x))
-    x_a = torch.sigmoid(self.fc4_a(x))
-    x_b = self.tanh(self.fc4_b(x))
-    x_c = torch.sigmoid(self.fc4_c(x))
+    action_mean = self.action_mean(x)
 
-    x_total = torch.cat([x_a, x_b, x_c], dim=-1)
+    action_mean[:4] = torch.sigmoid(action_mean[:4])
+    action_mean[4:6] = self.tanh(action_mean[4:6])
+    action_mean[6:] = torch.sigmoid(action_mean[6:])
 
-    action_mean = self.action_mean(x_total)
-    action_mean = action_mean.view(-1)
     action_log_std = self.action_log_std.expand_as(action_mean)
     action_std = torch.exp(action_log_std)
     return action_mean, action_log_std, action_std
