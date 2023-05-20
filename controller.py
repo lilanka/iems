@@ -152,6 +152,13 @@ class Controller:
     actions = to_numpy(self.agent.select_action(to_tensor(obs))) * self.p_capacity_vector
     return actions 
 
+  def random_action(self):
+    action = []
+    for i in range(len(self.n_action_space)):
+      action.append(np.random.choice(self.action_space[i]))
+    self.a1 = action
+    return action
+
   def observe(self, r, obs2, done):
     if self.is_training:
       cost = self._get_auxiliary_cost()
@@ -165,7 +172,12 @@ class Controller:
       battery1_soc, battery2_soc = self.battery1.get_next_soc(soc[0], is_percentage=True), self.battery2.get_next_soc(soc[1], is_percentage=True)
     else:
       battery1_soc, battery2_soc = self.battery1.get_next_soc(action[4]), self.battery2.get_next_soc(action[5])
-    
+
+    if action is not None:
+      zero_negative_values = lambda lst: [0 if num < 0 else num for num in lst]
+      action[:4] = zero_negative_values(action[:4])
+      action[6:] = zero_negative_values(action[6:])
+
     self.energy_network.run_energy_network(swd, action, [battery1_soc, battery2_soc])
     # update soc for next power flow
     self.energy_network.update_soc([battery1_soc, battery2_soc])
@@ -173,13 +185,6 @@ class Controller:
     observations = np.concatenate((pq, [battery1_soc, battery2_soc, price]), axis=0)
     self.s1 = observations
     return observations
-
-  def random_action(self):
-    action = []
-    for i in range(len(self.n_action_space)):
-      action.append(np.random.choice(self.action_space[i]))
-    self.a1 = action
-    return action
   
   def run_system(self, data):
     self.energy_network.run_energy_network(data)
