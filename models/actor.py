@@ -11,12 +11,12 @@ class Actor(nn.Module):
     self.fc1 = nn.Linear(in_dims, 256)
     self.fc2 = nn.Linear(256, 256)
     self.fc3 = nn.Linear(256, 256)
-    self.action_mean = nn.Linear(256, 10)
+    self.action_mean = nn.Linear(256, out_dims)
 
     self.action_mean.weight.data.mul_(0.1)
     self.action_mean.bias.data.mul_(0.0)
 
-    self.action_log_std = nn.Parameter(torch.ones(1, 10) * log_std)
+    self.action_log_std = nn.Parameter(torch.ones(out_dims) * log_std)
 
     self.relu = nn.ReLU()
     self.tanh = nn.Tanh()

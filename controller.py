@@ -29,7 +29,7 @@ def define_action_space(cfg):
     if abs(p_bat2[i]) < 1e-10:
       p_bat2[i] = 0
 
-  return [q_rfc2, p_chp, p_fc, p_rfc2, p_bat1, p_bat2, q_rfc1, q_chp, q_fc, q_rfc2]
+  return [p_rfc1, p_chp, p_fc, p_rfc2, p_bat1, p_bat2, q_rfc1, q_chp, q_fc, q_rfc2]
 
 def get_n_action_space(action_space):
   dim = []
@@ -72,7 +72,7 @@ class Controller:
     self.energy_network = EnergyNetwork(config)
 
     # agent network
-    self.agent = Actor(self.n_obs, self.n_action_space).to(self.device)
+    self.agent = Actor(self.n_obs, len(self.n_action_space)).to(self.device)
     # critic network 
     self.critic = Critic(self.n_obs, len(self.n_action_space)).to(self.device)
     self.critic_c = Critic(self.n_obs, len(self.n_action_space)).to(self.device)
@@ -83,6 +83,7 @@ class Controller:
     self.a1 = None # most recent state and action
 
   def update_policy(self):
+    print("update policy")
     s1_b, a1_b, r_b, s2_b, t_b, c_b = self.memory.sample_and_split(self.config["batch_size"])
 
     # Q values 
@@ -149,7 +150,6 @@ class Controller:
       soc = self.energy_network.get_soc()
       battery1_soc, battery2_soc = self.battery1.get_next_soc(soc[0], is_percentage=True), self.battery2.get_next_soc(soc[1], is_percentage=True)
     else:
-      print(len(action))
       battery1_soc, battery2_soc = self.battery1.get_next_soc(action[4]), self.battery2.get_next_soc(action[5])
     
     self.energy_network.run_energy_network(swd, action, [battery1_soc, battery2_soc])
