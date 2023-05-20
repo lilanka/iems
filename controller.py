@@ -82,8 +82,22 @@ class Controller:
     self.s1 = None
     self.a1 = None # most recent state and action
 
+    a = self.config["action_space"]
+
+    self.p_capacity_vector = np.array([
+      a["res_fuel_cell_1"]["p_max"],
+      a["chp_diesel"]["p_max"],
+      a["fuel_cell"]["p_max"],
+      a["res_fuel_cell_2"]["p_max"],
+      a["battery_1"]["p_max"],
+      a["battery_2"]["p_max"],
+      a["res_fuel_cell_1"]["q_max"],
+      a["chp_diesel"]["q_max"],
+      a["fuel_cell"]["q_max"],
+      a["res_fuel_cell_2"]["q_max"],
+    ])
+
   def update_policy(self):
-    print("update policy")
     s1_b, a1_b, r_b, s2_b, t_b, c_b = self.memory.sample_and_split(self.config["batch_size"])
 
     # Q values 
@@ -135,7 +149,7 @@ class Controller:
     return constraint_value
   
   def select_action(self, obs):
-    actions = to_numpy(self.agent.select_action(to_tensor(obs)))
+    actions = to_numpy(self.agent.select_action(to_tensor(obs))) * self.p_capacity_vector
     return actions 
 
   def observe(self, r, obs2, done):
