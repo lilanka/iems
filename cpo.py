@@ -74,6 +74,7 @@ def cpo_step(env_name, policy_net, value_net, states, actions, returns, advantag
     #print("flat_params: ", flat_params)
     #print(f"vlue_loss: ", vlaue_loss)
 
+    # NOTE (Lilanka): Is optimize good?
     flat_params, _, opt_info = scipy.optimize.fmin_tnc(get_value_loss, get_flat_params_from(value_net).detach().cpu().numpy(), maxfun=1000, disp=0)
 
     v_loss,_ = get_value_loss(get_flat_params_from(value_net).detach().cpu().numpy())
