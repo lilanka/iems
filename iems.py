@@ -42,7 +42,7 @@ def train(warmup, num_iterations, day, controller, training_data):
 
     if n_iter > warmup:
       v_loss, p_loss, cost_loss = controller.update_policy()
-      print(f"Iter: {step}, v_loss: {v_loss}, p_loss: {p_loss}, cost_loss: {cost_loss}, r: {r}")
+      print(f"Iter: {n_iter}, v_loss: {v_loss}, p_loss: {p_loss}, cost_loss: {cost_loss}, r: {r}")
       writer.add_scalar("reward", r, step)
 
     v_loss_list.append(v_loss)

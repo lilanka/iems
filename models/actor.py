@@ -6,7 +6,7 @@ from .utils import *
 class Actor(nn.Module):
   def __init__(self, in_dims, out_dims, log_std=0):
     super(Actor, self).__init__()
-    self.is_disc_action = True
+    self.is_disc_action = False 
 
     self.fc1 = nn.Linear(in_dims, 256)
     self.fc2 = nn.Linear(256, 256)
