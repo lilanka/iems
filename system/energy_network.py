@@ -39,7 +39,7 @@ class EnergyNetwork:
 
   def reset(self):
     # reset energy network
-    self.network.sgen["p_mw"][9:] = self.network.sgen["sn_mva"][9:]
+    self.network.sgen["p_mw"][9:] = 0 
     self.network.sgen["q_mvar"][9:] = 0
     self.network.storage["p_mw"] = self.network.storage["sn_mva"]
     self.network.storage["soc_percent"] = [self.config["battery1"]["soc"], self.config["battery2"]["soc"]]

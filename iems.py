@@ -13,40 +13,34 @@ from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
 
 def train(warmup, num_iterations, day, controller, training_data):
-  done = False
-  step = 0
-  episode = 0
   s1 = None
-  tau = training_data["p"].shape[0]
 
-  v_loss = 0
-  p_loss = 0
-  cost_loss = 0
+  step, n_iter = 0, 0
+  v_loss, p_loss, cost_loss = 0, 0, 0
+  reward_per_episode = 0
+  v_loss_list, p_loss_list, cost_loss_list, reward_list = [], [], [], []
 
-  v_loss_list = []
-  p_loss_list = []
-  cost_loss_list = []
-
-  while step < num_iterations:
-    # todo: resetting if it's start of the episode
-    if s1 is None or tau % day == 0:
-      s1 = controller.get_observations(training_data["swd"][episode], training_data["p"][episode], is_reset=True)
+  while n_iter < num_iterations:
+    done = False
+    # TODO (Lilanka): resetting if it's start of the episode
+    if step >= training_data["p"].shape[0]:
+      step = 0
+    if s1 is None or (step + 1) % day == 0:
+      s1 = controller.get_observations(training_data["swd"][step], training_data["p"][step], is_reset=True)
+      done = True
+      reward_list.append(reward_per_episode)
+      reward_per_episode = 0
     
-    # pick actions
-    if step <= warmup:
-      # take random actions just to fill the memory buffer for certain period
-      action = controller.random_action()
-    else:
-      action = controller.select_action(s1)
-
+    action = controller.select_action(s1)
     # next observation 
-    s2 = controller.get_observations(training_data["swd"][episode], training_data["p"][episode], action)
+    s2 = controller.get_observations(training_data["swd"][step], training_data["p"][step], action)
     # reward
-    r = controller.get_reward(training_data["p"][episode]) 
-
+    r = controller.get_reward(training_data["p"][step]) 
+    reward_per_episode += r
     # agent update policy
-    controller.observe(r, s2, done)
-    if step > warmup:
+    controller.observe(r, s2, 0 if done else 1)
+
+    if n_iter > warmup:
       v_loss, p_loss, cost_loss = controller.update_policy()
       print(f"Iter: {step}, v_loss: {v_loss}, p_loss: {p_loss}, cost_loss: {cost_loss}, r: {r}")
       writer.add_scalar("reward", r, step)
@@ -62,8 +56,8 @@ def train(warmup, num_iterations, day, controller, training_data):
     #writer.add_scalar("reward", r, step)
 
     step += 1
-    episode += 1
     s1 = s2
+    n_iter += 1
 
 def main():
   # don't need to load testing and testing data on memory

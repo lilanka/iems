@@ -1,8 +1,8 @@
 {
   "train_iter": 200000,
   "day": 96,
-  "warmup": 100,
-  "batch_size": 96,
+  "warmup": 512,
+  "batch_size": 512,
   "gamma": 0.999,
   "tau": 0.95,
   "max_kl": 0.02,

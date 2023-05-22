@@ -8,18 +8,29 @@ from memory import SequentialMemory
 from utils import *
 from cpo import cpo_step
 
+# NOTE (Lilanka): don't need this. actions are taken from continous space 
 def define_action_space(cfg):
   # define action space
-  p_rfc1 = np.arange(cfg["action_space"]["res_fuel_cell_1"]['p_min'], cfg["action_space"]["res_fuel_cell_1"]['p_max'] + cfg["action_space"]["res_fuel_cell_1"]['step_size'], cfg["action_space"]["res_fuel_cell_1"]['step_size'])
-  p_chp = np.arange(cfg["action_space"]["chp_diesel"]['p_min'], cfg["action_space"]["chp_diesel"]['p_max'] + cfg["action_space"]["chp_diesel"]['step_size'], cfg["action_space"]["chp_diesel"]['step_size'])
-  p_fc = np.arange(cfg["action_space"]["fuel_cell"]['p_min'], cfg["action_space"]["fuel_cell"]['p_max'] + cfg["action_space"]["fuel_cell"]['step_size'], cfg["action_space"]["fuel_cell"]['step_size'])
-  p_rfc2 = np.arange(cfg["action_space"]["res_fuel_cell_2"]['p_min'], cfg["action_space"]["res_fuel_cell_2"]['p_max'] + cfg["action_space"]["res_fuel_cell_2"]['step_size'], cfg["action_space"]["res_fuel_cell_2"]['step_size'])
-  p_bat1 = np.arange(cfg["action_space"]["battery_1"]["p_min"], cfg["action_space"]["battery_1"]["p_max"] + cfg["action_space"]["battery_1"]['step_size'], cfg["action_space"]["battery_1"]['step_size'])
-  p_bat2 = np.arange(cfg["action_space"]["battery_2"]["p_min"], cfg["action_space"]["battery_2"]["p_max"] + cfg["action_space"]["battery_2"]['step_size'], cfg["action_space"]["battery_2"]['step_size'])
-  q_rfc1 = np.arange(cfg["action_space"]["res_fuel_cell_1"]['q_min'], cfg["action_space"]["res_fuel_cell_1"]['q_max'] + cfg["action_space"]["res_fuel_cell_1"]['step_size'], cfg["action_space"]["res_fuel_cell_1"]['step_size'])
-  q_chp = np.arange(cfg["action_space"]["chp_diesel"]['q_min'], cfg["action_space"]["chp_diesel"]['q_max'] + cfg["action_space"]["chp_diesel"]['step_size'], cfg["action_space"]["chp_diesel"]['step_size'])
-  q_fc = np.arange(cfg["action_space"]["fuel_cell"]['q_min'], cfg["action_space"]["fuel_cell"]['q_max'] + cfg["action_space"]["fuel_cell"]['step_size'], cfg["action_space"]["fuel_cell"]['step_size'])
-  q_rfc2 = np.arange(cfg["action_space"]["res_fuel_cell_2"]['q_min'], cfg["action_space"]["res_fuel_cell_2"]['q_max'] + cfg["action_space"]["res_fuel_cell_2"]['step_size'], cfg["action_space"]["res_fuel_cell_2"]['step_size'])
+  p_rfc1 = np.arange(cfg["action_space"]["res_fuel_cell_1"]['p_min'], cfg["action_space"]["res_fuel_cell_1"]['p_max'] + 
+                     cfg["action_space"]["res_fuel_cell_1"]['step_size'], cfg["action_space"]["res_fuel_cell_1"]['step_size'])
+  p_chp = np.arange(cfg["action_space"]["chp_diesel"]['p_min'], cfg["action_space"]["chp_diesel"]['p_max'] + 
+                    cfg["action_space"]["chp_diesel"]['step_size'], cfg["action_space"]["chp_diesel"]['step_size'])
+  p_fc = np.arange(cfg["action_space"]["fuel_cell"]['p_min'], cfg["action_space"]["fuel_cell"]['p_max'] + 
+                   cfg["action_space"]["fuel_cell"]['step_size'], cfg["action_space"]["fuel_cell"]['step_size'])
+  p_rfc2 = np.arange(cfg["action_space"]["res_fuel_cell_2"]['p_min'], cfg["action_space"]["res_fuel_cell_2"]['p_max'] + 
+                     cfg["action_space"]["res_fuel_cell_2"]['step_size'], cfg["action_space"]["res_fuel_cell_2"]['step_size'])
+  p_bat1 = np.arange(cfg["action_space"]["battery_1"]["p_min"], cfg["action_space"]["battery_1"]["p_max"] + 
+                     cfg["action_space"]["battery_1"]['step_size'], cfg["action_space"]["battery_1"]['step_size'])
+  p_bat2 = np.arange(cfg["action_space"]["battery_2"]["p_min"], cfg["action_space"]["battery_2"]["p_max"] + 
+                     cfg["action_space"]["battery_2"]['step_size'], cfg["action_space"]["battery_2"]['step_size'])
+  q_rfc1 = np.arange(cfg["action_space"]["res_fuel_cell_1"]['q_min'], cfg["action_space"]["res_fuel_cell_1"]['q_max'] + 
+                     cfg["action_space"]["res_fuel_cell_1"]['step_size'], cfg["action_space"]["res_fuel_cell_1"]['step_size'])
+  q_chp = np.arange(cfg["action_space"]["chp_diesel"]['q_min'], cfg["action_space"]["chp_diesel"]['q_max'] + 
+                    cfg["action_space"]["chp_diesel"]['step_size'], cfg["action_space"]["chp_diesel"]['step_size'])
+  q_fc = np.arange(cfg["action_space"]["fuel_cell"]['q_min'], cfg["action_space"]["fuel_cell"]['q_max'] + 
+                   cfg["action_space"]["fuel_cell"]['step_size'], cfg["action_space"]["fuel_cell"]['step_size'])
+  q_rfc2 = np.arange(cfg["action_space"]["res_fuel_cell_2"]['q_min'], cfg["action_space"]["res_fuel_cell_2"]['q_max'] + 
+                     cfg["action_space"]["res_fuel_cell_2"]['step_size'], cfg["action_space"]["res_fuel_cell_2"]['step_size'])
 
   for i in range(len(p_bat1)):
     if abs(p_bat1[i]) < 1e-10:
@@ -51,7 +62,7 @@ class Controller:
     self.is_training = is_training
     self.config = config
     #self.device = "cuda" if torch.cuda.is_available() else "cpu"
-    # todo: find a way to put things on gpu
+    # TODO (Lilanka): find a way to put things on gpu
     self.device = "cpu"
 
     self.gamma = config["gamma"]
@@ -84,21 +95,15 @@ class Controller:
 
     a = self.config["action_space"]
 
-    self.p_capacity_vector = np.array([
-      a["res_fuel_cell_1"]["p_max"],
-      a["chp_diesel"]["p_max"],
-      a["fuel_cell"]["p_max"],
-      a["res_fuel_cell_2"]["p_max"],
-      a["battery_1"]["p_max"],
-      a["battery_2"]["p_max"],
-      a["res_fuel_cell_1"]["q_max"],
-      a["chp_diesel"]["q_max"],
-      a["fuel_cell"]["q_max"],
-      a["res_fuel_cell_2"]["q_max"],
+    self.p_capacity_vector = np.array([a["res_fuel_cell_1"]["p_max"], a["chp_diesel"]["p_max"], a["fuel_cell"]["p_max"],
+                                      a["res_fuel_cell_2"]["p_max"], a["battery_1"]["p_max"], a["battery_2"]["p_max"],
+                                      a["res_fuel_cell_1"]["q_max"], a["chp_diesel"]["q_max"], a["fuel_cell"]["q_max"],
+                                      a["res_fuel_cell_2"]["q_max"],
     ])
 
   def update_policy(self):
     s1_b, a1_b, r_b, s2_b, t_b, c_b = self.memory.sample_and_split(self.config["batch_size"])
+    print(t_b)
 
     # Q values 
     with torch.no_grad():
@@ -107,20 +112,19 @@ class Controller:
 
     # get advantage estimate from the trajectories
     advantages, returns = self._estimate_advantages(r_b, t_b, q_b)
-
     cost_advantages, _ = self._estimate_advantages(c_b, t_b, qc_b)
-
     constraint_value = self._estimate_constraint_value(c_b, t_b)
     constraint_value = constraint_value[0]
 
     # perform update
-    v_loss, p_loss, cost_loss = cpo_step("mg", self.agent, self.critic, s1_b, a1_b, r_b, advantages, cost_advantages, constraint_value, self.config["max_constraint"], self.config["max_kl"], self.config["damping"], self.config["l2_reg"])
+    v_loss, p_loss, cost_loss = cpo_step("mg", self.agent, self.critic, s1_b, a1_b, r_b, advantages, cost_advantages, constraint_value, 
+                                         self.config["max_constraint"], self.config["max_kl"], self.config["damping"], self.config["l2_reg"])
     return v_loss, p_loss, cost_loss
 
   def _estimate_advantages(self, r, mask, q):
     deltas = advantages = np.empty_like(r) 
-
     prev_value = prev_advantage = 0
+
     for i in reversed(range(self.config["batch_size"])):
       deltas[i] = r[i] * self.gamma * self.tau * prev_value * mask[i] - q[i]
       advantages[i] = deltas[i] + self.gamma * self.tau * prev_advantage * mask[i]
@@ -150,6 +154,7 @@ class Controller:
   
   def select_action(self, obs):
     actions = to_numpy(self.agent.select_action(to_tensor(obs))) * self.p_capacity_vector
+    self.a1 = actions
     return actions 
 
   def random_action(self):
@@ -173,10 +178,15 @@ class Controller:
     else:
       battery1_soc, battery2_soc = self.battery1.get_next_soc(action[4]), self.battery2.get_next_soc(action[5])
 
+    # bounding action values for realistic actions in the grid 
     if action is not None:
       zero_negative_values = lambda lst: [0 if num < 0 else num for num in lst]
+      one_if_above_one = lambda lst: [1 if num > 1 else num for num in lst]
+      neg_one_if_below_neg_one = lambda lst: [-1 if num < -1 else num for num in lst]
       action[:4] = zero_negative_values(action[:4])
       action[6:] = zero_negative_values(action[6:])
+      action = one_if_above_one(action)
+      action[4:6] = neg_one_if_below_neg_one(action[4:6])
 
     self.energy_network.run_energy_network(swd, action, [battery1_soc, battery2_soc])
     # update soc for next power flow
@@ -190,7 +200,7 @@ class Controller:
     self.energy_network.run_energy_network(data)
 
   def get_reward(self, price):
-    p = self.energy_network.get_dg_p()*1000 # Convert from MW to kW (Pandapower default is MW)
+    p = self.energy_network.get_dg_p()*1000 # convert from MW to kW (Pandapower default is MW)
     grid_p, _ = self.energy_network.get_grid_powers()
 
     cost_dg = np.sum(self.a_d * p**2 + self.b_d * p + self.c_d)

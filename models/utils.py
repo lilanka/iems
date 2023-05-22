@@ -1,12 +1,10 @@
 import torch
 import math
-import pdb
 
 def normal_entropy(std):
   var = std.pow(2)
   entropy = 0.5 + 0.5 * torch.log(2 * var * math.pi)
   return entropy.sum(1, keepdim=True)
-
 
 def normal_log_density(x, mean, log_std, std):
   var = std.pow(2)
