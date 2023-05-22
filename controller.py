@@ -220,7 +220,7 @@ class Controller:
 
     s_grid = np.sqrt(grid_p**2 + grid_q**2)
     aux_cost_ext_grid = np.maximum(0, (s_grid / 25) - 1)
-    aux_cost_battery = np.sum(np.maximum(np.maximum(0, battery_soc - 0.8), 0.2 - battery_soc))
+    aux_cost_battery = np.sum(np.maximum(np.maximum(0, battery_soc / 0.8 - 1), 1 - battery_soc / 0.2))
     aux_cost_dg = np.sum(np.maximum(0, (np.sqrt(p**2 + q**2) / s) - 1))
 
     aux_cost = aux_cost_voltage + aux_cost_current + aux_cost_ext_grid + aux_cost_battery + aux_cost_dg
