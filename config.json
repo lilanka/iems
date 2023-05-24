@@ -1,4 +1,5 @@
 {
+  "model": "cpo",
   "train_iter": 200000,
   "day": 96,
   "warmup": 512,
@@ -27,7 +28,7 @@
   }, 
 
   "Memory": {
-    "mem_size": 6000000,
+    "mem_size": 1024,
     "window_length": 1
   },
 

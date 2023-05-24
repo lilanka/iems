@@ -221,7 +221,7 @@ class SequentialMemory(Memory):
     config = super(SequentialMemory, self).get_config()
     config['limit'] = self.limit
     return config
-
+    
 class EpisodeParameterMemory(Memory):
   def __init__(self, limit, **kwargs):
     super(EpisodeParameterMemory, self).__init__(**kwargs)

@@ -61,8 +61,8 @@ class Controller:
   def __init__(self, config, is_training=True):
     self.is_training = is_training
     self.config = config
-    #self.device = "cuda" if torch.cuda.is_available() else "cpu"
     # TODO (Lilanka): find a way to put things on gpu
+    #self.device = "cuda" if torch.cuda.is_available() else "cpu"
     self.device = "cpu"
 
     self.gamma = config["gamma"]
@@ -119,6 +119,11 @@ class Controller:
     v_loss, p_loss, cost_loss = cpo_step("mg", self.agent, self.critic, s1_b, a1_b, r_b, advantages, cost_advantages, constraint_value, 
                                          self.config["max_constraint"], self.config["max_kl"], self.config["damping"], self.config["l2_reg"])
     return v_loss, p_loss, cost_loss
+
+  # TODO (Lilanka): reset the buffer 
+  def reset_buffer(self):
+    # empty the memory (only used in cpo)
+    pass
 
   def _estimate_advantages(self, r, mask, q):
     deltas = advantages = np.empty_like(r) 

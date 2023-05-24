@@ -10,15 +10,18 @@ from process_data import prepare_data
 
 from torch.utils.tensorboard import SummaryWriter
 
+# models available: cpo, ddpg
 writer = SummaryWriter()
 
-def train(warmup, num_iterations, day, controller, training_data):
+def train(warmup, num_iterations, day, controller, training_data, model, batch_size, buffer_size):
   s1 = None
 
-  step, n_iter = 0, 0
+  step, n_iter, cpo_iter = 0, 0, 0
   v_loss, p_loss, cost_loss = 0, 0, 0
   reward_per_episode = 0
   v_loss_list, p_loss_list, cost_loss_list, reward_list = [], [], [], []
+
+  cpo_max_iter = buffer_size / batch_size
 
   while n_iter < num_iterations:
     done = False
@@ -40,10 +43,16 @@ def train(warmup, num_iterations, day, controller, training_data):
     # agent update policy
     controller.observe(r, s2, 0 if done else 1)
 
-    if n_iter > warmup:
-      v_loss, p_loss, cost_loss = controller.update_policy()
-      print(f"Iter: {n_iter}, v_loss: {v_loss}, p_loss: {p_loss}, cost_loss: {cost_loss}, r: {r}")
+    if n_iter > buffer_size:
+      if model == "cpo":
+        if cpo_iter >= cpo_max_iter:
+          controller.reset_buffer()
+          cpo_iter = 0
+        v_loss, p_loss, cost_loss = controller.update_policy()
+        cpo_iter += 1
       writer.add_scalar("reward", r, step)
+
+    print(f"Iter: {n_iter}, v_loss: {v_loss}, p_loss: {p_loss}, cost_loss: {cost_loss}, r: {r}")
 
     v_loss_list.append(v_loss)
     p_loss_list.append(p_loss)
@@ -73,7 +82,8 @@ def main():
   controller = Controller(config)
 
   if is_training:
-    train(config["warmup"], config["train_iter"], config["day"], controller, training_data)
+    train(config["warmup"], config["train_iter"], config["day"], controller, training_data, config["model"], 
+          config["batch_size"], config["Memory"]["mem_size"])
 
 if __name__ == "__main__":
   main()
